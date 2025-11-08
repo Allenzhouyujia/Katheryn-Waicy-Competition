@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResNet Architecture with Residual Connections</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            background: #f5f5f5;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 42px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+        
+        /* Residual Block Diagram */
+        .residual-block-section {
+            margin-bottom: 60px;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .section-title {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .residual-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            position: relative;
+            padding: 60px 40px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .main-path {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            z-index: 2;
+        }
+        
+        .conv-block {
+            width: 180px;
+            height: 80px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border: 3px solid #2c3e50;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+        
+        .conv-block:hover {
+            transform: scale(1.05);
+        }
+        
+        .conv-label {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .conv-detail {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .relu-block {
+            width: 180px;
+            height: 50px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border: 3px solid #2c3e50;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .add-block {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            border: 3px solid #2c3e50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 32px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 3;
+        }
+        
+        /* Skip Connection Path */
+        .skip-connection {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .skip-path {
+            position: absolute;
+            background: none;
+            border: 5px solid #27ae60;
+            border-radius: 20px;
+        }
+        
+        .skip-arrow {
+            position: absolute;
+            color: #27ae60;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .skip-label {
+            position: absolute;
+            color: #27ae60;
+            font-size: 16px;
+            font-weight: 700;
+            background: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 3px solid #27ae60;
+        }
+        
+        /* Full Architecture */
+        .full-architecture {
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+        
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 15px;
+            min-width: max-content;
+            padding: 20px;
+        }
+        
+        .arch-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+        
+        .input-layer {
+            width: 100px;
+            height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 3px solid #2c3e50;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .res-block-stack {
+            width: 140px;
+            height: 300px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border: 3px solid #2c3e50;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .res-block-stack::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 2px dashed rgba(255,255,255,0.5);
+            border-radius: 5px;
+            pointer-events: none;
+        }
+        
+        .stack-label {
+            font-size: 15px;
+            margin-bottom: 8px;
+            z-index: 2;
+        }
+        
+        .stack-detail {
+            font-size: 11px;
+            opacity: 0.9;
+            text-align: center;
+            z-index: 2;
+        }
+        
+        /* Residual connection overlay */
+        .residual-overlay {
+            position: absolute;
+            top: 50%;
+            left: -30px;
+            width: calc(100% + 60px);
+            height: 50%;
+            border: 4px solid #27ae60;
+            border-top: none;
+            border-radius: 0 0 20px 20px;
+            pointer-events: none;
+        }
+        
+        .residual-arrow {
+            position: absolute;
+            top: 50%;
+            right: -25px;
+            color: #27ae60;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .output-layer {
+            width: 120px;
+            height: 200px;
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            border: 3px solid #2c3e50;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .layer-label {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-top: 10px;
+            max-width: 150px;
+        }
+        
+        .layer-dimension {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+        
+        .flow-arrow {
+            font-size: 32px;
+            color: #95a5a6;
+            font-weight: bold;
+        }
+        
+        /* Legend */
+        .legend {
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .legend-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .legend-icon {
+            width: 50px;
+            height: 35px;
+            border-radius: 5px;
+            border: 3px solid #2c3e50;
+            flex-shrink: 0;
+        }
+        
+        .legend-text {
+            font-size: 14px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        /* Comparison boxes */
+        .comparison-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .comparison-box {
+            padding: 25px;
+            background: white;
+            border-radius: 10px;
+            border: 3px solid #e9ecef;
+        }
+        
+        .comparison-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .comparison-content {
+            line-height: 1.8;
+            color: #2c3e50;
+        }
+        
+        .highlight {
+            background: #fffacd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 1200px) {
+            .comparison-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ResNet Architecture</h1>
+        <p class="subtitle">Deep Residual Learning with Skip Connections</p>
+        
+        <!-- Residual Block Detail -->
+        <div class="residual-block-section">
+            <div class="section-title">Residual Block: The Core Building Block</div>
+            
+            <div class="residual-diagram">
+                <!-- Input -->
+                <div style="text-align: center;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); border: 3px solid #2c3e50; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">
+                        Input<br>x
+                    </div>
+                </div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- Main Path -->
+                <div class="main-path">
+                    <div class="conv-block">
+                        <div class="conv-label">Conv 3×3</div>
+                        <div class="conv-detail">ReLU + BatchNorm</div>
+                    </div>
+                    <div style="font-size: 24px; color: #95a5a6;">↓</div>
+                    <div class="conv-block">
+                        <div class="conv-label">Conv 3×3</div>
+                        <div class="conv-detail">BatchNorm</div>
+                    </div>
+                </div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- Add Operation -->
+                <div class="add-block">+</div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- ReLU -->
+                <div class="relu-block">ReLU</div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- Output -->
+                <div style="text-align: center;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); border: 3px solid #2c3e50; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">
+                        Output<br>F(x)+x
+                    </div>
+                </div>
+                
+                <!-- Skip Connection -->
+                <svg class="skip-connection" style="position: absolute; width: 100%; height: 100%;">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#27ae60" />
+                        </marker>
+                    </defs>
+                    <path d="M 180 140 Q 180 60, 620 60 Q 820 60, 820 140" 
+                          stroke="#27ae60" 
+                          stroke-width="6" 
+                          fill="none"
+                          marker-end="url(#arrowhead)"/>
+                </svg>
+                
+                <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #27ae60; font-size: 18px; font-weight: 700; background: white; padding: 8px 20px; border-radius: 25px; border: 3px solid #27ae60; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    Identity/Skip Connection
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; padding: 20px; background: #e8f8f5; border-left: 5px solid #27ae60; border-radius: 5px;">
+                <p style="color: #2c3e50; line-height: 1.8; font-size: 15px;">
+                    <strong>Key Innovation:</strong> The <span class="highlight">skip/residual connection</span> allows gradients to flow directly through the network, 
+                    solving the vanishing gradient problem and enabling training of very deep networks (100+ layers). 
+                    The network learns the residual function <strong>F(x)</strong> instead of the desired underlying mapping, 
+                    making it easier to optimize.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Full Architecture -->
+        <div class="full-architecture">
+            <div class="section-title">ResNet-50 Architecture Overview</div>
+            
+            <div class="arch-flow">
+                <!-- Input -->
+                <div class="arch-block">
+                    <div class="input-layer">
+                        Input<br><br>224×224×3
+                    </div>
+                    <div class="layer-label">
+                        Input Image
+                    </div>
+                </div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- Conv1 + MaxPool -->
+                <div class="arch-block">
+                    <div style="width: 120px; height: 300px; background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%); border: 3px solid #2c3e50; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-weight: 700; padding: 15px;">
+                        <div style="font-size: 15px; margin-bottom: 8px;">Conv1</div>
+                        <div style="font-size: 11px; text-align: center;">7×7, 64<br>stride 2</div>
+                        <div style="margin: 10px 0; color: rgba(255,255,255,0.7);">+</div>
+                        <div style="font-size: 15px; margin-bottom: 5px;">MaxPool</div>
+                        <div style="font-size: 11px;">3×3, stride 2</div>
+                    </div>
+                    <div class="layer-label">
+                        Initial Conv
+                        <div class="layer-dimension">112×112×64</div>
+                    </div>
+                </div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- Conv2_x -->
+                <div class="arch-block">
+                    <div class="res-block-stack" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                        <div class="residual-overlay"></div>
+                        <div class="residual-arrow">↗</div>
+                        <div class="stack-label">Conv2_x</div>
+                        <div class="stack-detail">3 Residual Blocks<br>64 filters<br>56×56</div>
+                    </div>
+                    <div class="layer-label">
+                        Stage 2
+                        <div class="layer-dimension">56×56×256</div>
+                    </div>
+                </div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- Conv3_x -->
+                <div class="arch-block">
+                    <div class="res-block-stack" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); height: 280px;">
+                        <div class="residual-overlay"></div>
+                        <div class="residual-arrow">↗</div>
+                        <div class="stack-label">Conv3_x</div>
+                        <div class="stack-detail">4 Residual Blocks<br>128 filters<br>28×28</div>
+                    </div>
+                    <div class="layer-label">
+                        Stage 3
+                        <div class="layer-dimension">28×28×512</div>
+                    </div>
+                </div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- Conv4_x -->
+                <div class="arch-block">
+                    <div class="res-block-stack" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); height: 260px;">
+                        <div class="residual-overlay"></div>
+                        <div class="residual-arrow">↗</div>
+                        <div class="stack-label">Conv4_x</div>
+                        <div class="stack-detail">6 Residual Blocks<br>256 filters<br>14×14</div>
+                    </div>
+                    <div class="layer-label">
+                        Stage 4
+                        <div class="layer-dimension">14×14×1024</div>
+                    </div>
+                </div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- Conv5_x -->
+                <div class="arch-block">
+                    <div class="res-block-stack" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); height: 240px;">
+                        <div class="residual-overlay"></div>
+                        <div class="residual-arrow">↗</div>
+                        <div class="stack-label">Conv5_x</div>
+                        <div class="stack-detail">3 Residual Blocks<br>512 filters<br>7×7</div>
+                    </div>
+                    <div class="layer-label">
+                        Stage 5
+                        <div class="layer-dimension">7×7×2048</div>
+                    </div>
+                </div>
+                
+                <div class="flow-arrow">→</div>
+                
+                <!-- GAP + FC -->
+                <div class="arch-block">
+                    <div class="output-layer">
+                        <div style="font-size: 15px; margin-bottom: 10px;">AvgPool</div>
+                        <div style="font-size: 11px; margin-bottom: 15px;">Global</div>
+                        <div style="border-top: 2px solid rgba(255,255,255,0.5); padding-top: 10px; width: 100%;">
+                            <div style="font-size: 15px; margin-bottom: 5px;">FC</div>
+                            <div style="font-size: 11px;">1000 classes</div>
+                        </div>
+                    </div>
+                    <div class="layer-label">
+                        Output
+                        <div class="layer-dimension">Softmax</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comparison Section -->
+        <div class="legend">
+            <div class="legend-title">Why ResNet Works: Skip Connections Solve Deep Learning Challenges</div>
+            
+            <div class="comparison-section">
+                <div class="comparison-box">
+                    <div class="comparison-title">Traditional Deep Networks</div>
+                    <div class="comparison-content">
+                        <p style="margin-bottom: 10px;">❌ <strong>Vanishing Gradients:</strong> Gradients become extremely small as they backpropagate through many layers</p>
+                        <p style="margin-bottom: 10px;">❌ <strong>Degradation Problem:</strong> Deeper networks paradoxically perform worse than shallow ones</p>
+                        <p style="margin-bottom: 10px;">❌ <strong>Training Difficulty:</strong> Very deep networks (50+ layers) are hard to train and often fail to converge</p>
+                        <p>❌ <strong>Optimization Challenge:</strong> Learning identity mappings is difficult</p>
+                    </div>
+                </div>
+                
+                <div class="comparison-box">
+                    <div class="comparison-title">ResNet with Skip Connections</div>
+                    <div class="comparison-content">
+                        <p style="margin-bottom: 10px;">✅ <strong>Gradient Highway:</strong> Skip connections provide direct paths for gradients to flow backward</p>
+                        <p style="margin-bottom: 10px;">✅ <strong>Performance Gain:</strong> Deeper networks consistently outperform shallow ones (152+ layers work well)</p>
+                        <p style="margin-bottom: 10px;">✅ <strong>Easier Training:</strong> Networks converge faster and more reliably</p>
+                        <p>✅ <strong>Identity Learning:</strong> Network can learn <span class="highlight">F(x) = 0</span> to preserve identity when needed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Legend -->
+        <div class="legend" style="margin-top: 30px;">
+            <div class="legend-title">Architecture Components</div>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);"></div>
+                    <div class="legend-text">Convolutional Layers</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); border-radius: 50%; width: 45px; height: 45px;"></div>
+                    <div class="legend-text">Skip/Residual Connection</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: 700;">+</div>
+                    <div class="legend-text">Element-wise Addition</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);"></div>
+                    <div class="legend-text">ReLU Activation</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);"></div>
+                    <div class="legend-text">Pooling / FC Layers</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Architecture Summary -->
+        <div class="legend" style="margin-top: 30px;">
+            <div class="legend-title">ResNet-50 Architecture Summary</div>
+            <div style="line-height: 2; color: #2c3e50;">
+                <p><strong>Total Layers:</strong> 50 layers (48 convolutional + 1 pooling + 1 FC)</p>
+                <p><strong>Residual Blocks:</strong> 16 blocks (3+4+6+3) organized in 4 stages</p>
+                <p><strong>Skip Connections:</strong> Each residual block has an identity shortcut</p>
+                <p><strong>Key Innovation:</strong> <span class="highlight">H(x) = F(x) + x</span> where F(x) is the residual mapping</p>
+                <p><strong>Variants:</strong> ResNet-18, ResNet-34, ResNet-50, ResNet-101, ResNet-152</p>
+                <p><strong>Parameters:</strong> ~25.6 million (ResNet-50)</p>
+                <p><strong>Achievement:</strong> Won ILSVRC 2015 with 3.57% top-5 error rate</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

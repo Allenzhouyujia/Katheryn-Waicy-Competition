@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Files containing sensitive information (bat files load from .env, but exclude for safety)
+init_knowledge_base.bat
+start_app.bat
+# run_app.py is now safe (uses dotenv), so it can be committed
+
+# MCP configuration (may contain sensitive tokens)
+mcp.json
+*.mcp.json
+!mcp.json.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database
+data/db/
+*.sqlite3
+*.db
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test results
+*.json
+!package.json
+!package-lock.json
+!mcp.json.example
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
